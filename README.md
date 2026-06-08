@@ -33,6 +33,16 @@ pip install selenium webdriver-manager
 
 ## 使用方法
 
+### 方法一：下载可执行文件（推荐）
+
+直接下载编译好的可执行文件，无需安装 Python 环境：
+
+[下载 bilibili_cleaner.exe](https://github.com/MXYLR/delete_bilibili_notifications/releases/download/v1.0.0/bilibili_cleaner.exe)
+
+下载后双击运行即可。
+
+### 方法二：源代码运行
+
 ```bash
 # 运行脚本
 .venv\Scripts\python.exe delete_bilibili_notifications.py
