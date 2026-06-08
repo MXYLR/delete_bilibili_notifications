@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.spec
+*.egg-info/
+.DS_Store
+cookies.txt
+page_source.html
