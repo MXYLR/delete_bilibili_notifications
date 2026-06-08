@@ -6,6 +6,7 @@
 
 - 支持删除点赞、回复和@我三种通知类型
 - **扫码登录**：自动打开浏览器，用户扫码即可登录
+- **不再通知**：点赞通知支持先点击"不再通知"再删除，避免重复通知
 - **可视化操作**：可以看到浏览器中的删除过程
 - 显示详细的删除进度和结果
 
@@ -33,6 +34,16 @@ pip install selenium webdriver-manager
 
 ## 使用方法
 
+### 方法一：下载可执行文件（推荐）
+
+直接下载编译好的可执行文件，无需安装 Python 环境：
+
+[下载 bilibili_cleaner.exe](https://github.com/MXYLR/delete_bilibili_notifications/releases/download/v1.2.0/bilibili_cleaner.exe)
+
+下载后双击运行即可。
+
+### 方法二：源代码运行
+
 ```bash
 # 运行脚本
 .venv\Scripts\python.exe delete_bilibili_notifications.py
@@ -46,6 +57,24 @@ pip install selenium webdriver-manager
 4. 登录成功后回到终端按回车键继续
 5. 选择要清理的通知类型（默认全部三种）
 6. 脚本自动开始清理通知
+
+## 清理逻辑
+
+### 点赞通知
+对于点赞通知，脚本会按以下顺序操作：
+1. 鼠标悬停在通知项上
+2. 点击「不再通知」按钮
+3. 点击确认弹窗
+4. 点击「删除」按钮
+5. 点击确认弹窗
+
+这样可以确保该点赞来源不会再产生新通知。
+
+### 回复和@我通知
+对于回复和@我通知，脚本会：
+1. 鼠标悬停在通知项上
+2. 点击「删除」按钮
+3. 点击确认弹窗
 
 ## 示例输出
 
