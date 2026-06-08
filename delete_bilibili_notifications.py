@@ -1,4 +1,6 @@
 import time
+import os
+import sys
 
 
 DEFAULT_UA = (
@@ -14,6 +16,19 @@ NOTIFICATION_TYPES = {
 }
 
 
+def _get_chromedriver_path():
+    """获取 ChromeDriver 路径，优先使用同目录下的 chromedriver.exe"""
+    # PyInstaller 打包后的临时目录
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, 'chromedriver.exe')
+    # 开发环境下的同目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    driver_path = os.path.join(current_dir, 'chromedriver.exe')
+    if os.path.exists(driver_path):
+        return driver_path
+    return None
+
+
 def _build_chrome_driver(headless=False):
     """构建 Chrome WebDriver，失败时返回 None。"""
     try:
@@ -25,12 +40,6 @@ def _build_chrome_driver(headless=False):
         print("    .venv\\Scripts\\python -m pip install selenium webdriver-manager")
         return None
 
-    try:
-        from webdriver_manager.chrome import ChromeDriverManager
-        use_wdm = True
-    except ImportError:
-        use_wdm = False
-
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
@@ -41,15 +50,28 @@ def _build_chrome_driver(headless=False):
         chrome_options.add_argument("--headless=new")
 
     try:
-        if use_wdm:
+        # 优先使用打包的或同目录下的 ChromeDriver
+        driver_path = _get_chromedriver_path()
+        if driver_path:
+            print(f"使用本地 ChromeDriver: {driver_path}")
+            service = Service(driver_path)
+            return webdriver.Chrome(service=service, options=chrome_options)
+        
+        # 降级使用 webdriver-manager
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
             service = Service(ChromeDriverManager().install())
             return webdriver.Chrome(service=service, options=chrome_options)
+        except ImportError:
+            pass
+        
+        # 最后尝试系统 PATH 中的 chromedriver
         return webdriver.Chrome(options=chrome_options)
     except Exception as e:
         print(f"[错误] 无法启动 Chrome：{e}")
         print("  解决方案：")
         print("  1) 确认已安装 Chrome 浏览器")
-        print("  2) 手动下载 ChromeDriver 并放到 PATH 中")
+        print("  2) 手动下载 ChromeDriver 并放到程序同目录中")
         return None
 
 
@@ -109,6 +131,44 @@ def delete_notifications_by_ui(driver, notify_type):
 
             for item in items:
                 try:
+                    driver.execute_script("""
+                        const container = arguments[0];
+                        
+                        let noNotifyBtn = null;
+                        const allElements = container.querySelectorAll('*');
+                        for (const el of allElements) {
+                            if (el.textContent && el.textContent.includes('不再通知')) {
+                                noNotifyBtn = el;
+                                break;
+                            }
+                        }
+                        
+                        if (noNotifyBtn) {
+                            noNotifyBtn.click();
+                            
+                            const startTime = Date.now();
+                            while (Date.now() - startTime < 2000) {
+                                let confirmBtn = null;
+                                const allBtns = document.querySelectorAll('button');
+                                for (const btn of allBtns) {
+                                    if (btn.textContent && btn.textContent.includes('确认')) {
+                                        confirmBtn = btn;
+                                        break;
+                                    }
+                                }
+                                if (confirmBtn) {
+                                    confirmBtn.click();
+                                    break;
+                                }
+                                for (let j = 0; j < 1000000; j++);
+                            }
+                            
+                            for (let j = 0; j < 5000000; j++);
+                        }
+                    """, item)
+                    
+                    time.sleep(1)
+                    
                     delete_ok = driver.execute_script("""
                         const container = arguments[0];
                         const deleteBtn = container.querySelector('.interaction-item__btn.delete, button[class*="delete"]');
@@ -119,7 +179,7 @@ def delete_notifications_by_ui(driver, notify_type):
                         const btns = container.querySelectorAll('button');
                         for (const b of btns) {
                             const svg = b.querySelector('svg');
-                            if (svg || b.textContent.includes('删除')) {
+                            if (svg || (b.textContent && b.textContent.includes('删除'))) {
                                 b.click();
                                 return true;
                             }
