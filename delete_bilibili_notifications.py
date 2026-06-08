@@ -134,12 +134,23 @@ def delete_notifications_by_ui(driver, notify_type):
                     driver.execute_script("""
                         const container = arguments[0];
                         
-                        let noNotifyBtn = null;
-                        const allElements = container.querySelectorAll('*');
-                        for (const el of allElements) {
-                            if (el.textContent && el.textContent.includes('不再通知')) {
-                                noNotifyBtn = el;
-                                break;
+                        let noNotifyBtn = container.querySelector('.interaction-item__btn.no-notify, button[class*="no-notify"], button[class*="notify"]');
+                        if (!noNotifyBtn) {
+                            const btns = container.querySelectorAll('button');
+                            for (const b of btns) {
+                                if (b.textContent && b.textContent.includes('不再通知')) {
+                                    noNotifyBtn = b;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!noNotifyBtn) {
+                            const spans = container.querySelectorAll('span');
+                            for (const s of spans) {
+                                if (s.textContent && s.textContent.includes('不再通知')) {
+                                    noNotifyBtn = s;
+                                    break;
+                                }
                             }
                         }
                         
@@ -148,12 +159,14 @@ def delete_notifications_by_ui(driver, notify_type):
                             
                             const startTime = Date.now();
                             while (Date.now() - startTime < 2000) {
-                                let confirmBtn = null;
-                                const allBtns = document.querySelectorAll('button');
-                                for (const btn of allBtns) {
-                                    if (btn.textContent && btn.textContent.includes('确认')) {
-                                        confirmBtn = btn;
-                                        break;
+                                let confirmBtn = document.querySelector('.b-modal-button.b-modal-confirm, .bili-modal__confirm-btn');
+                                if (!confirmBtn) {
+                                    const allBtns = document.querySelectorAll('button');
+                                    for (const btn of allBtns) {
+                                        if (btn.textContent && btn.textContent.includes('确认')) {
+                                            confirmBtn = btn;
+                                            break;
+                                        }
                                     }
                                 }
                                 if (confirmBtn) {
